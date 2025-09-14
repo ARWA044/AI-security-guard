@@ -1,0 +1,28 @@
+{
+  "name": "AI-Powered Anomaly Detection Dashboard",
+  "description": "A comprehensive cybersecurity dashboard built with Streamlit and scikit-learn that detects suspicious file access patterns to help prevent data breaches.",
+  "repository": "https://github.com/yourusername/cnss_project",
+  "keywords": ["streamlit", "machine-learning", "anomaly-detection", "cybersecurity", "isolation-forest"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "env": {
+    "STREAMLIT_SERVER_HEADLESS": {
+      "description": "Run Streamlit in headless mode",
+      "value": "true"
+    },
+    "STREAMLIT_SERVER_ENABLE_CORS": {
+      "description": "Enable CORS for Streamlit",
+      "value": "false"
+    }
+  }
+}
