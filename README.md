@@ -1,184 +1,67 @@
-# AI-Powered Anomaly Detection Dashboard
+## AI-Powered Intrusion Detection Dashboard
 
-A comprehensive cybersecurity dashboard built with Streamlit and scikit-learn that detects suspicious file access patterns to help prevent data breaches.
+Behavior-based intrusion detection for post-compromise scenarios. This Streamlit app analyzes user and file-access activity to flag suspicious behavior (e.g., mass downloads at odd hours, abnormal access patterns). Inspired by the CNSS April 2025 incident, it acts as an early-warning layer to reduce attacker dwell time and prevent data loss.
 
-## 🚀 Key Improvements Made
+— Built with Python, Streamlit, scikit-learn, and Plotly.
 
-### 1. **Modular Architecture**
-- **Separated concerns** into focused modules:
-  - `config.py` - Configuration management
-  - `data_generator.py` - Data simulation and generation
-  - `ml_pipeline.py` - Machine learning pipeline
-  - `ui_components.py` - UI components and visualizations
-  - `utils.py` - Utility functions and helpers
-  - `main.py` - Main application orchestrator
+## ✨ Key Features
 
-### 2. **Enhanced Machine Learning**
-- **Advanced feature engineering** with time-based and behavioral features
-- **Model persistence** with joblib for saving/loading trained models
-- **Improved anomaly detection** with better risk scoring
-- **Model validation** and performance metrics
-- **Feature importance** analysis
+- Behavioral anomaly detection with Isolation Forest
+- Risk scoring (0–100) and high-risk alerts
+- Interactive visuals: downloads by hour, size distribution, risk histogram, heatmaps, timeline
+- Advanced filters by user, file type, and risk threshold
+- One-click data export and attack simulation for demos
 
-### 3. **Performance Optimizations**
-- **Caching** for expensive operations using Streamlit's cache decorators
-- **Performance monitoring** with timing metrics
-- **Efficient data processing** with vectorized operations
-- **Lazy loading** for large datasets
+### ML Highlights
+- Unsupervised detection (Isolation Forest)
+- Time- and behavior-based feature engineering
+- Model persistence (load/save) and retraining controls
 
-### 4. **Enhanced UI/UX**
-- **Responsive design** with better column layouts
-- **Interactive visualizations** with Plotly
-- **Tabbed interface** for different chart types
-- **Real-time alerts** for high-risk events
-- **Data export** functionality
-- **Advanced filtering** options
+## 🚀 Quick Start
 
-### 5. **Data Management**
-- **Structured data validation** with comprehensive checks
-- **Data export** capabilities (CSV format)
-- **Session state management** for better user experience
-- **Error handling** and logging throughout
-
-### 6. **Security Features**
-- **High-risk event alerts** with configurable thresholds
-- **Audit logging** for all operations
-- **Data integrity validation**
-- **Input sanitization** and validation
-
-## 📁 Project Structure
-
-```
-cnss_project/
-├── main.py                 # Main application entry point
-├── config.py              # Configuration settings
-├── data_generator.py      # Data simulation and generation
-├── ml_pipeline.py         # Machine learning pipeline
-├── ui_components.py       # UI components and visualizations
-├── utils.py              # Utility functions and helpers
-├── test_app.py           # Test script
-├── requirements.txt      # Python dependencies
-├── README.md            # This file
-├── data/               # Data directory
-│   └── file_access_logs.csv
-├── logs/               # Log files
-└── models/            # Saved ML models
-    └── isolation_forest_model.pkl
+1) Install
+```bash
+pip install -r requirements.txt
 ```
 
-## 🛠️ Installation & Setup
+2) Run
+```bash
+streamlit run main.py
+```
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Run the application:**
-   ```bash
-   streamlit run main.py
-   ```
-
-3. **Run tests:**
-   ```bash
-   python test_app.py
-   ```
-
-## 🎯 Features
-
-### **Dashboard Components**
-- **Real-time anomaly detection** using Isolation Forest
-- **Interactive visualizations** with multiple chart types
-- **Advanced filtering** by user, file type, risk level
-- **Attack simulation** for testing and demonstration
-- **Data export** functionality
-
-### **Machine Learning**
-- **Isolation Forest** algorithm for unsupervised anomaly detection
-- **Feature engineering** with time-based and behavioral features
-- **Risk scoring** from 0-100 for each event
-- **Model persistence** and loading capabilities
-- **Performance monitoring** and validation
-
-### **Data Management**
-- **Simulated data generation** with realistic patterns
-- **Data validation** and integrity checks
-- **CSV export** with download functionality
-- **Session state management** for better UX
-
-## 🔧 Configuration
-
-Key settings can be modified in `config.py`:
-
-- **File types** and actions to simulate
-- **ML model parameters** (contamination, estimators)
-- **Working hours** for normal event generation
-- **Data paths** and logging configuration
-
-## 📊 Visualizations
-
-1. **Downloads per Hour** - Bar chart with anomaly overlay
-2. **File Size Distribution** - Histogram comparing normal vs suspicious
-3. **Risk Score Distribution** - Risk score histogram
-4. **User Activity Heatmap** - Activity patterns by user and hour
-5. **Anomaly Timeline** - Daily anomaly trends
-
-## 🚨 Alert System
-
-The dashboard includes an alert system that:
-- **Identifies high-risk events** (configurable threshold)
-- **Displays real-time warnings** in the UI
-- **Provides detailed event information**
-- **Tracks suspicious user patterns**
-
-## 🧪 Testing
-
-Run the test suite to verify functionality:
-
+3) Optional: Tests
 ```bash
 python test_app.py
 ```
 
-Tests cover:
-- Data generation
-- ML pipeline
-- Data validation
-- Performance monitoring
+## 🔗 Links
 
-## 📈 Performance
+- GitHub repository: `https://github.com/ARWA044/AI-security-guard`
+- Live demo (Streamlit Cloud): `https://ai-security-guard.streamlit.app/` (replace with your deployed URL)
 
-The application includes performance monitoring for:
-- Data loading times
-- Model training duration
-- Prediction latency
-- Overall application performance
+## 🖼️ Screenshot / Demo
 
-## 🔒 Security Considerations
+![Dashboard Screenshot](docs/Screenshot.jpeg)
 
-- **Input validation** for all user inputs
-- **Data sanitization** before processing
-- **Audit logging** for security events
-- **Error handling** to prevent information leakage
+## ⚙️ Configuration (Summary)
 
-## 🚀 Future Enhancements
+Edit `config.py` to adjust:
+- Contamination rate, estimators, sampling
+- Working hours and file types
+- Paths for data, logs, and models
 
-Potential improvements for future versions:
-- **Database integration** (PostgreSQL, MongoDB)
-- **Real-time data ingestion** from APIs
-- **User authentication** and authorization
-- **Advanced ML models** (ensemble methods)
-- **Mobile-responsive design**
-- **API endpoints** for external integration
+<details>
+<summary>How it works (technical)</summary>
 
-## 📝 License
+1. Load or simulate access logs and validate data
+2. Engineer behavioral features (e.g., hour-of-day, activity frequency, file sizes)
+3. Score with Isolation Forest → normalize to risk score (0–100)
+4. Surface high-risk events with alerts and visuals for triage
 
-This project is created for educational and demonstration purposes.
+</details>
 
-## 🤝 Contributing
+## 🔒 Note
 
-Feel free to submit issues and enhancement requests!
-
----
-
-**Built with ❤️ using Streamlit, scikit-learn, and Plotly**
+This is a complementary detection layer focused on behavior inside the perimeter. It does not replace patching, identity controls, EDR, or SIEM/SOAR.
 
 
