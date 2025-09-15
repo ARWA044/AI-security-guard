@@ -39,6 +39,10 @@ python test_app.py
 - GitHub repository: `https://github.com/ARWA044/AI-security-guard`
 - Live demo (Streamlit Cloud): `https://ai-security-guard.streamlit.app/` (replace with your deployed URL)
 
+## ℹ️ Project Status
+
+This project is under active development. It currently uses simulated/random data and does not yet support uploading or testing with your own datasets. Custom data ingestion is planned for a future release.
+
 ## 🖼️ Screenshot / Demo
 
 ![Dashboard Screenshot](docs/Screenshot.jpeg)
