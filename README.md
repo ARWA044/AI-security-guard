@@ -1,6 +1,18 @@
-## AI-Powered Intrusion Detection Dashboard
+— Built with Python, Streamlit, scikit-learn, and Plotly.
 
-Behavior-based intrusion detection for post-compromise scenarios. This Streamlit app analyzes user and file-access activity to flag suspicious behavior (e.g., mass downloads at odd hours, abnormal access patterns). Inspired by the CNSS April 2025 incident, it acts as an early-warning layer to reduce attacker dwell time and prevent data loss.
+# AI Security Guard 🛡️🤖
+
+In April 2025, Morocco’s CNSS (National Social Security Fund) suffered a major cyberattack where sensitive data of millions of citizens was leaked and shared on platforms like Telegram. This incident highlighted a critical gap: traditional security tools like firewalls and patching are not always enough to stop attackers once they find a way in.
+
+**AI Security Guard** is a proof-of-concept project that shows how AI can add an extra layer of defense. Instead of blocking attacks directly, it focuses on detecting suspicious behaviors inside the system—like unusual data downloads at strange hours or a user suddenly exporting thousands of records.
+
+The project uses machine learning (Isolation Forest) to learn what “normal” activity looks like, then flags anything that seems out of place. A simple dashboard makes it easy for security teams to:
+
+- Visualize suspicious events
+- Simulate attack scenarios (like mass downloads or impersonation)
+- Filter results by risk score to focus on the most dangerous activities
+
+While no system is perfect, this tool demonstrates how AI can support security teams by catching attacks faster and giving them a chance to react before too much damage is done.
 
 — Built with Python, Streamlit, scikit-learn, and Plotly.
 
