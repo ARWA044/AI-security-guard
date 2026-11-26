@@ -1,111 +1,41 @@
-"""
-Simple test script to verify the application works
-"""
+from pathlib import Path
 import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from data_generator import DataGenerator, DataManager
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+import pandas as pd
+from data_generator import DataGenerator
 from ml_pipeline import AnomalyDetector
 from utils import DataValidator, PerformanceMonitor
-import pandas as pd
+
 
 def test_data_generation():
-    """Test data generation functionality"""
-    print("Testing data generation...")
-    
     generator = DataGenerator()
-    
-    # Test normal events
-    normal_df = generator.generate_normal_events(n=100)
-    print(f"Generated {len(normal_df)} normal events")
-    print(f"Columns: {list(normal_df.columns)}")
-    
-    # Test suspicious events
-    susp_df = generator.generate_suspicious_events(n=20)
-    print(f"Generated {len(susp_df)} suspicious events")
-    
-    return normal_df, susp_df
+    normal = generator.generate_normal_events(n=100)
+    suspicious = generator.generate_suspicious_events(n=20)
+    assert len(normal) == 100
+    assert len(suspicious) == 20
+    assert set(normal.columns) == set(suspicious.columns)
+
 
 def test_ml_pipeline():
-    """Test ML pipeline functionality"""
-    print("\nTesting ML pipeline...")
-    
-    # Generate test data
     generator = DataGenerator()
-    df = generator.generate_normal_events(n=200)
-    susp_df = generator.generate_suspicious_events(n=50)
-    combined_df = pd.concat([df, susp_df], ignore_index=True)
-    
-    # Test anomaly detection
-    detector = AnomalyDetector(contamination=0.1)
-    pipeline, df_scored = detector.fit_and_score(combined_df)
-    
-    print(f"Detected {df_scored['anomaly_flag'].sum()} anomalies out of {len(df_scored)} events")
-    print(f"Average risk score: {df_scored['risk_score'].mean():.2f}")
-    
-    return df_scored
+    data = pd.concat([generator.generate_normal_events(n=200),
+                      generator.generate_suspicious_events(n=50)], ignore_index=True)
+    _, scored = AnomalyDetector(contamination=0.1, n_estimators=50).fit_and_score(data)
+    assert len(scored) == len(data)
+    assert scored["risk_score"].notna().all()
+    assert scored["risk_score"].between(0, 100).all()
+    assert scored["anomaly_flag"].isin([True, False]).all()
+
 
 def test_data_validation():
-    """Test data validation functionality"""
-    print("\nTesting data validation...")
-    
-    generator = DataGenerator()
-    df = generator.generate_normal_events(n=100)
-    
-    validator = DataValidator()
-    validation_results = validator.validate_dataframe(df)
-    
-    print(f"Data validation passed: {validation_results['is_valid']}")
-    if validation_results['errors']:
-        print(f"Errors: {validation_results['errors']}")
-    if validation_results['warnings']:
-        print(f"Warnings: {validation_results['warnings']}")
-    
-    return validation_results
+    data = DataGenerator().generate_normal_events(n=100)
+    assert DataValidator.validate_dataframe(data)["is_valid"]
+    assert not DataValidator.validate_dataframe(pd.DataFrame())["is_valid"]
 
-def test_performance_monitoring():
-    """Test performance monitoring"""
-    print("\nTesting performance monitoring...")
-    
+
+def test_performance_monitor():
     monitor = PerformanceMonitor()
-    
-    # Simulate some operations
-    monitor.start_timer("test_operation")
-    import time
-    time.sleep(0.1)  # Simulate work
-    duration = monitor.end_timer("test_operation")
-    
-    print(f"Test operation took: {duration:.3f}s")
-    
-    metrics = monitor.get_metrics()
-    print(f"Performance metrics: {metrics}")
-
-def main():
-    """Run all tests"""
-    print("Running application tests...\n")
-    
-    try:
-        # Test data generation
-        normal_df, susp_df = test_data_generation()
-        
-        # Test ML pipeline
-        df_scored = test_ml_pipeline()
-        
-        # Test data validation
-        validation_results = test_data_validation()
-        
-        # Test performance monitoring
-        test_performance_monitoring()
-        
-        print("\n✅ All tests passed successfully!")
-        
-    except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    main()
-
-
+    monitor.start_timer("test")
+    assert monitor.end_timer("test") >= 0
