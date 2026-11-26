@@ -39,3 +39,21 @@ def test_performance_monitor():
     monitor = PerformanceMonitor()
     monitor.start_timer("test")
     assert monitor.end_timer("test") >= 0
+
+
+def test_risk_consistent_for_single_record_and_batch(tmp_path):
+    generator = DataGenerator()
+    train = generator.generate_normal_events(n=200)
+    model = AnomalyDetector(n_estimators=30)
+    model.fit_and_score(train)
+    sample = generator.generate_suspicious_events(n=20).reset_index(drop=True)
+    alone = model.predict_new_data(sample.iloc[[0]])
+    batch = model.predict_new_data(sample)
+    assert alone.iloc[0]['risk_score'] == batch.iloc[0]['risk_score']
+    assert alone.iloc[0]['anomaly_flag'] == batch.iloc[0]['anomaly_flag']
+    model.model_path = tmp_path / 'model.pkl'
+    model.save_model()
+    restored = AnomalyDetector()
+    restored.model_path = model.model_path
+    assert restored.load_model()
+    assert restored.predict_new_data(sample)['risk_score'].equals(batch['risk_score'])

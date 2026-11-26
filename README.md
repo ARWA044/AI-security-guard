@@ -84,3 +84,7 @@ This is a complementary detection layer focused on behavior inside the perimeter
 ## Evaluation limitations
 
 Risk scores are relative anomaly scores, not calibrated attack probabilities. Synthetic data does not establish production detection accuracy; retraining on simulated suspicious events can change the baseline.
+
+### Risk-score consistency
+
+Risk scores are relative anomaly scores, not calibrated probabilities. The model now freezes its training score bounds and historical user summaries for inference; legacy saved models require retraining. Unknown users use zero-valued historical features. Only load trusted model artifacts.
