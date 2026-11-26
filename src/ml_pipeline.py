@@ -178,7 +178,7 @@ class AnomalyDetector:
         if self.pipeline is None:
             raise ValueError("Model must be fitted before making predictions")
         
-        df_feat = FeatureEngineer.engineer_features(df)
+        df_feat = FeatureEngineer.engineer_features(df, self.user_stats)
         
         # Ensure same features as training
         missing_features = set(self.feature_columns) - set(df_feat.columns)
@@ -270,7 +270,7 @@ class AnomalyDetector:
             logger.warning("No true labels provided for evaluation")
             return {}
         
-        df_feat = FeatureEngineer.engineer_features(df)
+        df_feat = FeatureEngineer.engineer_features(df, self.user_stats)
         preds = self.pipeline.named_steps["model"].predict(
             self.pipeline.named_steps["prep"].transform(df_feat)
         )
