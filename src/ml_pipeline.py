@@ -23,7 +23,7 @@ class FeatureEngineer:
     """Handles feature engineering for the ML pipeline"""
     
     @staticmethod
-    def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+    def engineer_features(df: pd.DataFrame, user_stats=None) -> pd.DataFrame:
         """
         Engineer features from raw data
         
@@ -42,6 +42,25 @@ class FeatureEngineer:
         df_feat["is_after_hours"] = ((df_feat["hour"] < 8) | (df_feat["hour"] > 19)).astype(int)
         
         # User behavior features (if we have historical data)
+        if user_stats is None:
+            user_stats = FeatureEngineer.user_baseline(df_feat)
+        df_feat = df_feat.join(user_stats, on="user_id")
+        for col in user_stats.columns:
+            df_feat[col] = df_feat[col].fillna(0)
+
+        # File type risk scoring (based on typical sensitivity)
+        file_risk_scores = {
+            "Database export": 10, "PDF": 7, "Excel": 6, "CSV": 5,
+            "Doc": 4, "PPT": 3, "Image": 2
+        }
+        df_feat["file_type_risk"] = df_feat["file_type"].map(file_risk_scores).fillna(0)
+        df_feat["is_large_file"] = (df_feat["file_size_MB"] > 50).astype(int)
+        df_feat["size_risk_score"] = np.where(df_feat["file_size_MB"] > 100, 10,
+            np.where(df_feat["file_size_MB"] > 50, 7, np.where(df_feat["file_size_MB"] > 10, 4, 1)))
+        return df_feat
+
+    @staticmethod
+    def user_baseline(df_feat):
         user_stats = df_feat.groupby("user_id").agg({
             "file_size_MB": ["mean", "std", "count"],
             "action": lambda x: (x == "download").sum()
@@ -50,29 +69,7 @@ class FeatureEngineer:
         user_stats.columns = ["avg_file_size", "std_file_size", "total_access", "download_count"]
         user_stats["download_ratio"] = user_stats["download_count"] / user_stats["total_access"]
         
-        df_feat = df_feat.merge(user_stats, left_on="user_id", right_index=True, how="left")
-        
-        # File type risk scoring (based on typical sensitivity)
-        file_risk_scores = {
-            "Database export": 10,
-            "PDF": 7,
-            "Excel": 6,
-            "CSV": 5,
-            "Doc": 4,
-            "PPT": 3,
-            "Image": 2
-        }
-        df_feat["file_type_risk"] = df_feat["file_type"].map(file_risk_scores)
-        
-        # Size-based features
-        df_feat["is_large_file"] = (df_feat["file_size_MB"] > 50).astype(int)
-        df_feat["size_risk_score"] = np.where(
-            df_feat["file_size_MB"] > 100, 10,
-            np.where(df_feat["file_size_MB"] > 50, 7,
-            np.where(df_feat["file_size_MB"] > 10, 4, 1))
-        )
-        
-        return df_feat
+        return user_stats.fillna(0)
 
 
 class AnomalyDetector:
@@ -83,6 +80,8 @@ class AnomalyDetector:
         self.n_estimators = n_estimators
         self.pipeline = None
         self.feature_columns = None
+        self.user_stats = None
+        self.risk_bounds = None
         self.model_path = MODELS_DIR / "isolation_forest_model.pkl"
     
     def build_pipeline(self) -> Pipeline:
@@ -126,7 +125,8 @@ class AnomalyDetector:
         logger.info("Starting model training and scoring")
         
         # Engineer features
-        df_feat = FeatureEngineer.engineer_features(df)
+        self.user_stats = FeatureEngineer.user_baseline(df)
+        df_feat = FeatureEngineer.engineer_features(df, self.user_stats)
         
         # Build and fit pipeline
         self.pipeline = self.build_pipeline()
@@ -142,7 +142,8 @@ class AnomalyDetector:
         
         # Convert to risk scores (0-100)
         raw = -scores
-        risk = (raw - raw.min()) / (raw.max() - raw.min() + 1e-9) * 100.0
+        self.risk_bounds = (float(raw.min()), float(raw.max()))
+        risk = self.normalize_risk(raw)
         
         # Get predictions
         preds = self.pipeline.named_steps["model"].predict(
@@ -196,7 +197,7 @@ class AnomalyDetector:
         
         # Convert to risk scores
         raw = -scores
-        risk = (raw - raw.min()) / (raw.max() - raw.min() + 1e-9) * 100.0
+        risk = self.normalize_risk(raw)
         
         # Get predictions
         preds = self.pipeline.named_steps["model"].predict(
@@ -210,6 +211,14 @@ class AnomalyDetector:
         
         return df_scored
     
+    def normalize_risk(self, raw):
+        if self.risk_bounds is None:
+            raise ValueError('Missing training score bounds; retrain the model')
+        low, high = self.risk_bounds
+        if high <= low:
+            return np.where(raw > high, 100.0, 0.0)
+        return np.clip((raw - low) / (high - low) * 100.0, 0.0, 100.0)
+
     def save_model(self) -> None:
         """Save the trained model to disk"""
         if self.pipeline is None:
@@ -217,6 +226,9 @@ class AnomalyDetector:
         
         joblib.dump({
             'pipeline': self.pipeline,
+            'schema_version': 2,
+            'risk_bounds': self.risk_bounds,
+            'user_stats': self.user_stats,
             'feature_columns': self.feature_columns,
             'contamination': self.contamination,
             'n_estimators': self.n_estimators
@@ -228,6 +240,11 @@ class AnomalyDetector:
         try:
             if self.model_path.exists():
                 model_data = joblib.load(self.model_path)
+                if model_data.get('schema_version') != 2:
+                    logger.warning('Legacy model requires retraining')
+                    return False
+                self.risk_bounds = model_data['risk_bounds']
+                self.user_stats = model_data['user_stats']
                 self.pipeline = model_data['pipeline']
                 self.feature_columns = model_data['feature_columns']
                 self.contamination = model_data['contamination']
@@ -258,11 +275,11 @@ class AnomalyDetector:
             self.pipeline.named_steps["prep"].transform(df_feat)
         )
         
-        # Convert to binary (1 = normal, 0 = anomaly)
-        preds_binary = (preds == 1).astype(int)
+        # Convert to binary (1 = anomaly, 0 = normal)
+        preds_binary = (preds == -1).astype(int)
         
         # Calculate metrics
-        report = classification_report(true_labels, preds_binary, output_dict=True)
+        report = classification_report(true_labels, preds_binary, labels=[0, 1], output_dict=True, zero_division=0)
         cm = confusion_matrix(true_labels, preds_binary)
         
         return {
