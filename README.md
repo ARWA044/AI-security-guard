@@ -1,5 +1,3 @@
-— Built with Python, Streamlit, scikit-learn, and Plotly.
-
 # AI Security Guard 🛡️🤖
 
 In April 2025, Morocco’s CNSS (National Social Security Fund) suffered a major cyberattack where sensitive data of millions of citizens was leaked and shared on platforms like Telegram. This incident highlighted a critical gap: traditional security tools like firewalls and patching are not always enough to stop attackers once they find a way in.
@@ -38,18 +36,18 @@ pip install -r requirements.txt
 
 2) Run
 ```bash
-streamlit run main.py
+python -m streamlit run src/main.py
 ```
 
 3) Optional: Tests
 ```bash
-python test_app.py
+python tests/test_app.py
 ```
 
 ## 🔗 Links
 
 - GitHub repository: `https://github.com/ARWA044/AI-security-guard`
-- Live demo (Streamlit Cloud): `https://ai-security-guard.streamlit.app/` (replace with your deployed URL)
+- Live demo (Streamlit Cloud): `https://ai-security-guard.streamlit.app/` (availability not verified)
 
 ## ℹ️ Project Status
 
@@ -61,7 +59,7 @@ This project is under active development. It currently uses simulated/random dat
 
 ## ⚙️ Configuration (Summary)
 
-Edit `config.py` to adjust:
+Edit `src/config.py` to adjust:
 - Contamination rate, estimators, sampling
 - Working hours and file types
 - Paths for data, logs, and models
@@ -81,3 +79,7 @@ Edit `config.py` to adjust:
 This is a complementary detection layer focused on behavior inside the perimeter. It does not replace patching, identity controls, EDR, or SIEM/SOAR.
 
 
+
+## Evaluation limitations
+
+Risk scores are relative anomaly scores, not calibrated attack probabilities. Synthetic data does not establish production detection accuracy; retraining on simulated suspicious events can change the baseline.
