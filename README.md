@@ -41,7 +41,8 @@ python -m streamlit run src/main.py
 
 3) Optional: Tests
 ```bash
-python tests/test_app.py
+python -m pip install pytest
+python -m pytest -q
 ```
 
 ## 🔗 Links
